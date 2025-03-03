@@ -7,9 +7,7 @@ from llama_index.core import SimpleDirectoryReader
 
 
 # Show title and description.
-st.title("📄 Document question answering")
-st.write("Upload a document below and ask a question about it – GPT will answer! ")
-
+st.title("📄 Data extraction using Gen AI")
 # Ask user for their OpenAI API key via `st.text_input`.
 # Alternatively, you can store the API key in `./.streamlit/secrets.toml` and access it
 # via `st.secrets`, see https://docs.streamlit.io/develop/concepts/connections/secrets-management
