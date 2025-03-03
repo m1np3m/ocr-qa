@@ -31,7 +31,7 @@ else:
 
     # Let the user upload a file via `st.file_uploader`.
     uploaded_file = st.file_uploader(
-        "Upload a document (.txt or .md)", type=("txt", "md", "jpg")
+        "Upload a document (jpg)", type=("txt", "md", "jpg")
     )
 
     if uploaded_file:
