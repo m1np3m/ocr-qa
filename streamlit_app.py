@@ -15,17 +15,12 @@ if st.secrets.get("OPENAI_API_KEY") is not None:
     os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
-
-@st.cache_resource(show_spinner="Model loading...")
-def load_model():
-    return MultiModalLLMCompletionProgram.from_defaults(
+if "model" not in st.session_state:
+    st.session_state.model = MultiModalLLMCompletionProgram.from_defaults(
         output_cls=IdentityCard,
         prompt_template_str=prompt_template_str,
         multi_modal_llm=gpt_4o,
     )
-
-
-model = load_model()
 
 if not openai_api_key:
     openai_api_key = st.text_input("OpenAI API Key", type="password")
@@ -48,7 +43,7 @@ else:
         ).load_data()
         # # Generate an answer using the OpenAI API.
         try:
-            response = model(image_documents=image_documents)
+            response = st.session_state.model(image_documents=image_documents)
         except Exception as e:
             response = "Sorry, an error occurred. Please try again."
         # # Stream the response to the app using `st.write_stream`.
