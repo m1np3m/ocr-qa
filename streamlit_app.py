@@ -1,53 +1,56 @@
 import streamlit as st
 from openai import OpenAI
+import os
+from utils import IdentityCard, prompt_template_str, gpt_4o
+from llama_index.core.program import MultiModalLLMCompletionProgram
+from llama_index.core import SimpleDirectoryReader
+
 
 # Show title and description.
 st.title("📄 Document question answering")
-st.write(
-    "Upload a document below and ask a question about it – GPT will answer! "
-    "To use this app, you need to provide an OpenAI API key, which you can get [here](https://platform.openai.com/account/api-keys). "
-)
+st.write("Upload a document below and ask a question about it – GPT will answer! ")
 
 # Ask user for their OpenAI API key via `st.text_input`.
 # Alternatively, you can store the API key in `./.streamlit/secrets.toml` and access it
 # via `st.secrets`, see https://docs.streamlit.io/develop/concepts/connections/secrets-management
-openai_api_key = st.text_input("OpenAI API Key", type="password")
+openai_api_key = os.getenv("OPENAI_API_KEY")
+
+
+@st.cache_resource(show_spinner="Model loading...")
+def load_model():
+    return MultiModalLLMCompletionProgram.from_defaults(
+        output_cls=IdentityCard,
+        prompt_template_str=prompt_template_str,
+        multi_modal_llm=gpt_4o,
+    )
+
+
+model = load_model()
+
 if not openai_api_key:
+    openai_api_key = st.text_input("OpenAI API Key", type="password")
     st.info("Please add your OpenAI API key to continue.", icon="🗝️")
 else:
-
     # Create an OpenAI client.
     client = OpenAI(api_key=openai_api_key)
 
     # Let the user upload a file via `st.file_uploader`.
     uploaded_file = st.file_uploader(
-        "Upload a document (.txt or .md)", type=("txt", "md")
+        "Upload a document (.txt or .md)", type=("txt", "md", "jpg")
     )
 
-    # Ask the user for a question via `st.text_area`.
-    question = st.text_area(
-        "Now ask a question about the document!",
-        placeholder="Can you give me a short summary?",
-        disabled=not uploaded_file,
-    )
-
-    if uploaded_file and question:
-
-        # Process the uploaded file and question.
-        document = uploaded_file.read().decode()
-        messages = [
-            {
-                "role": "user",
-                "content": f"Here's a document: {document} \n\n---\n\n {question}",
-            }
-        ]
-
-        # Generate an answer using the OpenAI API.
-        stream = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=messages,
-            stream=True,
-        )
-
-        # Stream the response to the app using `st.write_stream`.
-        st.write_stream(stream)
+    if uploaded_file:
+        bytes_data = uploaded_file.getvalue()
+        with open(f"./{uploaded_file.name}", "wb") as file:
+            file.write(bytes_data)
+        image_documents = SimpleDirectoryReader(
+            input_files=[f"./{uploaded_file.name}"]
+        ).load_data()
+        # # Generate an answer using the OpenAI API.
+        try:
+            response = model(image_documents=image_documents)
+        except Exception as e:
+            response = "Sorry, an error occurred. Please try again."
+        # # Stream the response to the app using `st.write_stream`.
+        st.write(response)
+        os.remove(f"./{uploaded_file.name}")
