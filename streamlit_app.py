@@ -4,7 +4,7 @@ import os
 from utils import IdentityCard, prompt_template_str, gpt_4o
 from llama_index.core.program import MultiModalLLMCompletionProgram
 from llama_index.core import SimpleDirectoryReader
-
+from loguru import logger
 
 # Show title and description.
 st.title("📄 Data extraction using Gen AI")
@@ -41,6 +41,7 @@ else:
         image_documents = SimpleDirectoryReader(
             input_files=[f"./{uploaded_file.name}"]
         ).load_data()
+        logger.debug(f"image_documents: {image_documents}")
         # # Generate an answer using the OpenAI API.
         try:
             response = st.session_state.model(image_documents=image_documents)
