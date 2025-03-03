@@ -13,6 +13,8 @@ st.write("Upload a document below and ask a question about it – GPT will answe
 # Ask user for their OpenAI API key via `st.text_input`.
 # Alternatively, you can store the API key in `./.streamlit/secrets.toml` and access it
 # via `st.secrets`, see https://docs.streamlit.io/develop/concepts/connections/secrets-management
+if st.secrets.get("OPENAI_API_KEY") is not None:
+    os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
 
