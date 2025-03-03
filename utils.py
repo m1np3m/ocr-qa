@@ -11,7 +11,7 @@ class IdentityCard(BaseModel):
     """Data model for a user's identity card."""
 
     full_name: Optional[str]
-    sex: Literal["Nam", "Nữ", "Khác"]
+    sex: Literal["Nam", "Nữ", "Không rõ"]
     address: Optional[str]
     date_of_birth: Optional[str]
 
