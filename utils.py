@@ -14,7 +14,7 @@ class IdentityCard(BaseModel):
 
 prompt_template_str = """\
 Use the attached IdentityCard image to extract data from it and store into the
-provided data class.
+provided data class. Always answer in the same language as the general one in document.
 """
 gpt_4o = OpenAIMultiModal(
     model="gpt-4o",
