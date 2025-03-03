@@ -1,6 +1,10 @@
 from pydantic import BaseModel
-from typing import List, Dict, Any, Union, Optional, Literal
-from llama_index.multi_modal_llms.openai import OpenAIMultiModal
+from typing import Optional, Literal
+import json
+import base64
+from openai import OpenAI
+
+client = OpenAI()
 
 
 class IdentityCard(BaseModel):
@@ -12,11 +16,40 @@ class IdentityCard(BaseModel):
     date_of_birth: Optional[str]
 
 
-prompt_template_str = """\
-Use the attached IdentityCard image to extract data from it and store into the
-provided data class. Always answer in the same language as the general one in document. Try all the best to extract all the information from the image.
-"""
-gpt_4o = OpenAIMultiModal(
-    model="gpt-4o",
-    temperature=0.0,
-)
+# Function to encode the image
+def encode_image(image_path):
+    with open(image_path, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode("utf-8")
+
+
+def extract_user_info(image_path):
+    if isinstance(image_path, str):
+        base64_image = encode_image(image_path)
+    else:
+        base64_image = image_path
+    # Getting the Base64 string
+
+    response = client.beta.chat.completions.parse(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": """
+    Extract the main information in the image and return it in JSON format without special characters.
+    The fields of the data follow the underscore rule. If the document language is in Vietnamese, pay more attention to the Vietnamese characters.                    
+    """,
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"},
+                    },
+                ],
+            }
+        ],
+        response_format=IdentityCard,
+        temperature=0.0,
+    )
+    return json.loads(response.choices[0].message.content)

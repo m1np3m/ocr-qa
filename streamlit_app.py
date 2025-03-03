@@ -1,10 +1,11 @@
 import streamlit as st
 from openai import OpenAI
 import os
-from utils import IdentityCard, prompt_template_str, gpt_4o
+from utils import extract_user_info
 from llama_index.core.program import MultiModalLLMCompletionProgram
 from llama_index.core import SimpleDirectoryReader
 from loguru import logger
+from io import StringIO
 
 # Show title and description.
 st.title("📄 Data extraction using Gen AI")
@@ -13,25 +14,17 @@ st.title("📄 Data extraction using Gen AI")
 # via `st.secrets`, see https://docs.streamlit.io/develop/concepts/connections/secrets-management
 if st.secrets.get("OPENAI_API_KEY") is not None:
     os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
-openai_api_key = os.getenv("OPENAI_API_KEY")
 
-if "model" not in st.session_state:
-    st.session_state.model = MultiModalLLMCompletionProgram.from_defaults(
-        output_cls=IdentityCard,
-        prompt_template_str=prompt_template_str,
-        multi_modal_llm=gpt_4o,
-    )
 
-if not openai_api_key:
+if not st.secrets["OPENAI_API_KEY"]:
     openai_api_key = st.text_input("OpenAI API Key", type="password")
     st.info("Please add your OpenAI API key to continue.", icon="🗝️")
 else:
-    # Create an OpenAI client.
-    client = OpenAI(api_key=openai_api_key)
 
     # Let the user upload a file via `st.file_uploader`.
     uploaded_file = st.file_uploader(
-        "Upload a document (jpg)", type=("txt", "md", "jpg")
+        "Upload a document ('png', 'jpeg', 'gif', 'webp')",
+        type=("png", "jpeg", "gif", "webp"),
     )
 
     if uploaded_file:
@@ -41,10 +34,9 @@ else:
         image_documents = SimpleDirectoryReader(
             input_files=[f"./{uploaded_file.name}"]
         ).load_data()
-        logger.debug(f"image_documents: {image_documents}")
         # # Generate an answer using the OpenAI API.
         try:
-            response = st.session_state.model(image_documents=image_documents)
+            response = extract_user_info(f"./{uploaded_file.name}")
         except Exception as e:
             logger.error(f"Error: {e}")
             response = "Sorry, an error occurred. Please try again."
