@@ -46,7 +46,7 @@ else:
         try:
             response = st.session_state.model(image_documents=image_documents)
         except Exception as e:
-            logger.debug(f"Error: {e}")
+            logger.error(f"Error: {e}")
             response = "Sorry, an error occurred. Please try again."
         # # Stream the response to the app using `st.write_stream`.
         st.write(response)
