@@ -52,4 +52,4 @@ def extract_user_info(image_path):
         response_format=IdentityCard,
         temperature=0.0,
     )
-    return json.loads(response.choices[0].message.content)
+    return json.loads(response.choices[0].message.content) 
